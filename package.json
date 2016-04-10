@@ -9,7 +9,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepublish": ". ./resources/prepublish.sh"
+    "build": "babel src --ignore __tests__ --out-dir ./",
+    "prepublish": "babel src --ignore __tests__ --out-dir ./"
   },
   "repository": {
     "type": "git",
