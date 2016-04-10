@@ -39,7 +39,6 @@
   },
   "homepage": "https://github.com/goblinlordx/authograph#readme",
   "dependencies": {
-    "graphql": "^0.5.0",
     "lodash": "^4.9.0"
   },
   "devDependencies": {
