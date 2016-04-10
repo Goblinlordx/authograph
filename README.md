@@ -1,2 +1,4 @@
-# authograph
-Authentication solution for use with GraphQL
+Authograph
+==========
+
+Authorization solution for use with GraphQL.

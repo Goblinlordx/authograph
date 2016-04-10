@@ -1,0 +1,28 @@
+{
+  "name": "authograph",
+  "version": "1.0.0",
+  "description": "Authorization solution for use with GraphQL",
+  "contributors": [
+    "Benjamin Baldivia"
+  ],
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goblinlordx/authograph.git"
+  },
+  "keywords": [
+    "graphql",
+    "rbac",
+    "authorization",
+    "security"
+  ],
+  "author": "Benjamin Baldivia",
+  "bugs": {
+    "url": "https://github.com/goblinlordx/authograph/issues"
+  },
+  "homepage": "https://github.com/goblinlordx/authograph#readme"
+}
