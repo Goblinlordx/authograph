@@ -42,6 +42,7 @@ var SpeciesType = new GraphQLObjectType({
       type: GraphQLString,
       description: `The name of this species.`
     }
+  }
 });
 
 export default SpeciesType;
