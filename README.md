@@ -89,7 +89,7 @@ builtPSet: <Function which takes a set of roles resolved from getRoles and retur
 ```js
 import MyRootQuery from './Query';
 import MyRootMutation from './Query';
-import * as GraphQLTypes from 'graphql/types
+import * as GraphQLTypes from 'graphql/types';
 
 const instance = new Authograph({
   Query: MyRootQuery,
