@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Authorization solution for use with GraphQL",
   "contributors": [
-    "Benjamin Baldivia"
+    "Benjamin Baldivia <goblinlordx@gmail.com>"
   ],
   "license": "BSD-3-Clause",
   "main": "index.js",
