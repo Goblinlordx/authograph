@@ -7,21 +7,20 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-import {GraphQLInt, GraphQLObjectType} from 'graphql';
-
-export const NullTypeConfig = {
-  name: 'Null',
-  description: "Null field type placeholder",
-  fields: {
-    null: {
-      type: GraphQLInt,
-      resolve() {
-        return null;
-      }
-    }
-  }
-};
-
-const NullType = new GraphQLObjectType(NullTypeConfig);
+ const NullType = (type) => {
+   var def = new type.GraphQLObjectType({
+     name: 'Null',
+     description: "Null field type placeholder",
+     fields: {
+       null: {
+         type: type.GraphQLInt,
+         resolve() {
+           return null;
+         }
+       }
+     }
+   });
+   return type[def.name] = def;
+ };
 
 export default NullType;

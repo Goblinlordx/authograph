@@ -6,11 +6,7 @@
  *  LICENSE file in the root directory of this source tree. An additional grant
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
-
-import {GraphQLInt, GraphQLObjectType,GraphQLSchema} from 'graphql';
 import _ from 'lodash';
-import bounder from './bounder';
-import {NullType, NullTypeConfig} from '../types/nullType';
 
 const initFilter = (type) => (fields, pSet, bypass) => {
   if(bypass)
@@ -29,11 +25,37 @@ const initFilter = (type) => (fields, pSet, bypass) => {
       fields[k].args = bounds.reduce((ir,ik) => {
         r[k] = fields[k].args[ik]
       },{});
-    fields[k].resolve = bounder(fields[k].resolve,refSet[k]);
+    fields[k].resolve = resolveBounds(fields[k].resolve,refSet[k]);
     r[k] = fields[k]
     return r;
-  },{})
+  },{});
   return bounded;
+}
+
+const resolveBounds = (resolve, bounds) => (root, args, context) => {
+  return resolve(root, args, context);
+}
+
+const NullType = (type) => {
+  var def = new type.GraphQLObjectType({
+    name: 'Null',
+    description: "Null field type placeholder",
+    fields: {
+      null: {
+        type: type.GraphQLInt,
+        resolve() {
+          return null;
+        }
+      }
+    }
+  });
+  return type[def.name] = def;
+};
+
+const genTypeContainer = (GraphQLTypes) => {
+  var types = Object.create(GraphQLTypes);
+  types.Null = NullType(types);
+  return types;
 }
 
 export default class Authograph {
@@ -50,7 +72,7 @@ export default class Authograph {
       this.hashRoles = o.hashRoles;
     if(o.cacheVersion instanceof Function)
       this.cacheVersion = o.cacheVersion;
-
+    this.GraphQLTypes = o.GraphQLTypes;
     this.bypass = o.bypass||false;
     this.caching = o.caching||false;
     this.handlerOps = o.handlerOps||{};
@@ -98,7 +120,7 @@ export default class Authograph {
       res.status(500).send("Internal Server Error");
     }
   }
-  applyPermissions(o,pSet = {}, bypass) {
+  applyPermissions(type, o,pSet = {}, bypass) {
     let fieldCache, nulled;
     let _fields = o.fields;
     let filter = initFilter(o.name);
@@ -111,8 +133,7 @@ export default class Authograph {
       fieldCache = filter(_fields, pSet, bypass)
 
       if(!fieldCache || Object.keys(fieldCache).length === 0) {
-        fieldCache = NullTypeConfig.fields;
-        nulled = true;
+        fieldCache = type.Null._config.fields;
       }
       return fieldCache;
     }
@@ -121,12 +142,12 @@ export default class Authograph {
   genType(typeContainer, TypeDef, pSet, bypass) {
     let def;
     try{
-      def = this.applyPermissions(TypeDef(typeContainer), pSet, bypass);
+      def = this.applyPermissions(typeContainer, TypeDef(typeContainer), pSet, bypass);
     }
     catch(err) {
       dev = NullType;
     }
-    return typeContainer[def.name] = new GraphQLObjectType(def);
+    return typeContainer[def.name] = new typeContainer.GraphQLObjectType(def);
   }
   buildSchema(req) {
     let roles,
@@ -143,22 +164,11 @@ export default class Authograph {
     .then((r) => {
       if(this.caching) {
         hash = this.hashRoles(r);
-        return this.validateCache()
-        .then((ok) => {
-          if(ok)
-            return true;
-          return this.flushCache();
-        })
-        .then((ok) => {
-          if(!ok)
-            throw new Error("Error flushing cache");
-          if(this.schemaCache[hash])
-            return cached = this.schemaCache[hash];
-          roles = r;
-          return this.buildPSet(roles);
-        })
+        if(this.schemaCache[hash])
+          return cached = this.schemaCache[hash];
+        roles = r;
+        return this.buildPSet(roles);
       }
-
       roles = r;
       return this.buildPSet(roles);
     })
@@ -166,7 +176,7 @@ export default class Authograph {
       if(cached)
         return cached;
       pSet = p;
-      let typeContainer = {Null:NullType};
+      let typeContainer = genTypeContainer(this.GraphQLTypes);
       // Generate types
       this.types.forEach(t => this.genType(typeContainer, t, pSet, bypass));
       return typeContainer;
@@ -180,8 +190,8 @@ export default class Authograph {
       }
 
       if(this.caching)
-        return this.schemaCache[hash] = new GraphQLSchema(schema);
-      return new GraphQLSchema(schema);
+        return this.schemaCache[hash] = new typeContainer.GraphQLSchema(schema);
+      return new typeContainer.GraphQLSchema(schema);
     })
   }
 
