@@ -27,7 +27,7 @@ app.use('/graphql', authograph.agHTTP.bind(authograph));
 
 
 ###### Type definitions
-Type definitions must be refactored slightly to work with this package.  Type definitions are injected at execution type to provide restricted types based on a permission set.  Below is a standard GraphQL object type definition (partially taken from [SWAPI implentation](https://github.com/graphql/swapi-graphql/blob/master/src/schema/types/species.js)):
+Type definitions must be refactored slightly to work with this package.  Type definitions are injected at execution time to provide restricted types based on a permission set.  Below is a standard GraphQL object type definition (partially taken from [SWAPI implentation](https://github.com/graphql/swapi-graphql/blob/master/src/schema/types/species.js)):
 ```js
 import {
   GraphQLObjectType,
