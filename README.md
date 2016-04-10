@@ -108,12 +108,14 @@ const instance = new Authograph({
   buildPSet(roleIds) {
     Promise.resolve({
       admin: {
-        users: {
-          name: {
-            admin:{}
-          },
-          email: {
-            admin:{}
+        Query: {
+          users: {
+            name: {
+              admin:{}
+            },
+            email: {
+              admin:{}
+            }
           }
         }
       }
