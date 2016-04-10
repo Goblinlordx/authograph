@@ -23,5 +23,9 @@
   "bugs": {
     "url": "https://github.com/goblinlordx/authograph/issues"
   },
-  "homepage": "https://github.com/goblinlordx/authograph#readme"
+  "homepage": "https://github.com/goblinlordx/authograph#readme",
+  "dependencies": {
+    "graphql": "^0.5.0",
+    "lodash": "^4.9.0"
+  }
 }
