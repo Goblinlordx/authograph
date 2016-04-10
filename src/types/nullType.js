@@ -9,7 +9,7 @@
 
 import {GraphQLInt, GraphQLObjectType} from 'graphql';
 
-const NullTypeConfig = {
+export const NullTypeConfig = {
   name: 'Null',
   description: "Null field type placeholder",
   fields: {
@@ -24,5 +24,4 @@ const NullTypeConfig = {
 
 const NullType = new GraphQLObjectType(NullTypeConfig);
 
-export NullTypeConfig;
 export default NullType;

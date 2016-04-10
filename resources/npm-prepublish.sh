@@ -21,7 +21,7 @@ fi;
 #
 #    var language = require('graphql/language');
 #
-babel src --ignore __tests__ --out-dir ./
+npm run build
 
 # Ensure a vanilla package.json before deploying so other tools do not interpret
 # The built output as requiring any further transformation.
