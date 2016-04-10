@@ -33,7 +33,6 @@ const initFilter = (type) => (fields, pSet, bypass) => {
     r[k] = fields[k]
     return r;
   },{})
-  console.log(bounded);
   return bounded;
 }
 
