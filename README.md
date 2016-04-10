@@ -107,11 +107,11 @@ const instance = new Authograph({
   },
   buildPSet(roleIds) {
     Promise.resolve({
-      admin: {
-        Query: {
-          users: {
-            name: {
-              admin:{}
+      admin: {          // Role
+        Query: {        // GraphQLObjectType
+          users: {      // Field
+            name: {     // Args
+              admin:{}  // Role as key with Object containing bounding functions as properties
             },
             email: {
               admin:{}
