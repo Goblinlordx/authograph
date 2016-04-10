@@ -13,6 +13,18 @@ npm i -S authograph
 ```
 
 #### Usage
+An instance of Authograph has a method ```.agHTTP``` can be used as a HANDLE function (```function(req,res)```).  This can be used with express in the following way:
+```js
+import authograph from './graphql/authograph';
+
+.
+.
+.
+
+
+app.use('/graphql', authograph.agHTTP.bind(authograph));
+```
+
 
 ###### Type definitions
 Type definitions must be refactored slightly to work with this package.  Type definitions are injected at execution type to provide restricted types based on a permission set.  Below is a standard GraphQL object type definition (partially taken from [SWAPI implentation](https://github.com/graphql/swapi-graphql/blob/master/src/schema/types/species.js)):
@@ -76,7 +88,7 @@ builtPSet: <Function which takes a set of roles resolved from getRoles and retur
 
 ```js
 import MyRootQuery from './Query';
-import MyRootMutation from './Query';
+import MyRootMutation from './Mutation';
 import * as GraphQLTypes from 'graphql/types';
 
 const instance = new Authograph({
@@ -125,4 +137,3 @@ export default instance;
   }
 }
 ```
-      
