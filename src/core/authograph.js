@@ -7,6 +7,7 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 import _ from 'lodash';
+import bounder from './bounder';
 
 const initFilter = (type) => (fields, pSet, bypass) => {
   if(bypass)
@@ -25,15 +26,11 @@ const initFilter = (type) => (fields, pSet, bypass) => {
       fields[k].args = bounds.reduce((ir,ik) => {
         r[k] = fields[k].args[ik]
       },{});
-    fields[k].resolve = resolveBounds(fields[k].resolve,refSet[k]);
+    fields[k].resolve = bounder(fields[k].resolve,refSet[k]);
     r[k] = fields[k]
     return r;
   },{});
   return bounded;
-}
-
-const resolveBounds = (resolve, bounds) => (root, args, context) => {
-  return resolve(root, args, context);
 }
 
 const NullType = (type) => {
