@@ -8,6 +8,7 @@
  */
 
 const bounder = (resolve, bounds) => (root, args, context) => {
+  console.log(bounds);
   return resolve(root, args, context);
 }
 
