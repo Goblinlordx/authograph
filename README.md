@@ -106,7 +106,7 @@ const instance = new Authograph({
     return Promise.resolve(user.Roles.map(o => o.id));
   },
   buildPSet(roleIds) {
-    Promise.resolve({
+    return Promise.resolve({
       admin: {          // Role
         Query: {        // GraphQLObjectType
           users: {      // Field
