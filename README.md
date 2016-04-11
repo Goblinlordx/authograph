@@ -15,7 +15,7 @@ npm i -S authograph
 #### Usage
 An instance of Authograph has a method ```.agHTTP``` can be used as a HANDLE function (```function(req,res)```).  This can be used with express in the following way:
 ```js
-import authograph from './graphql/authograph';
+import authograph from './graphql/authograph';  // Your configured instance (see creating usable instance below)
 
 .
 .
