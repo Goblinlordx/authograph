@@ -99,7 +99,6 @@ const instance = new Authograph({
   graphqlHTTP: graphqlHTTP,
   types: Types,
   getRoles(req) {
-    console.log("getRoles called");
     var user = req.user||{};
     if(!(user.Roles instanceof Array))
       return Promise.resolve([]);
