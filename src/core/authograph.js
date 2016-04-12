@@ -8,51 +8,36 @@
  */
 import _ from 'lodash';
 import bounder from './bounder';
+import * as Bounds from './bounds';
+import generateTypeContainer from './generateTypeContainer';
+import NullType from '../types/nullType'
 
 const initFilter = (type) => (fields, pSet, bypass) => {
   if(bypass)
     return fields;
 
-  let refSet = _.merge.apply(_,[{}].concat(Object.keys(pSet)
+  // Combine multiple roles into a single tree
+  let refSet = _.assign.apply(null,[{}].concat(Object.keys(pSet)
   .map((roleKey) => {
     if(!pSet[roleKey][type])
       return null;
-    return pSet[roleKey][type]
+    return pSet[roleKey][type];
   }).filter(o => !!o)));
-  let bounded = _.intersection(Object.keys(fields),Object.keys(refSet))
+
+  // Intersection of fields and args on real schema with permission set with role based bounds attached
+  return _.intersection(Object.keys(fields),Object.keys(refSet))
   .reduce((r,k) => {
-    let bounds = _.intersection(Object.keys(fields[k].args||{}), Object.keys(refSet[k]))
-    if(bounds.length > 0)
+    let bounds = _.intersection(Object.keys(fields[k].args||{}), Object.keys(refSet[k]));
+    if(bounds.length > 0) {
       fields[k].args = bounds.reduce((ir,ik) => {
-        r[k] = fields[k].args[ik]
+        ir[ik] = fields[k].args[ik];
+        return ir;
       },{});
+    }
     fields[k].resolve = bounder(fields[k].resolve,refSet[k]);
-    r[k] = fields[k]
+    r[k] = fields[k];
     return r;
   },{});
-  return bounded;
-}
-
-const NullType = (type) => {
-  var def = new type.GraphQLObjectType({
-    name: 'Null',
-    description: "Null field type placeholder",
-    fields: {
-      null: {
-        type: type.GraphQLInt,
-        resolve() {
-          return null;
-        }
-      }
-    }
-  });
-  return type[def.name] = def;
-};
-
-const genTypeContainer = (GraphQLTypes) => {
-  var types = Object.create(GraphQLTypes);
-  types.Null = NullType(types);
-  return types;
 }
 
 export default class Authograph {
@@ -69,7 +54,9 @@ export default class Authograph {
       this.hashRoles = o.hashRoles;
     if(o.cacheVersion instanceof Function)
       this.cacheVersion = o.cacheVersion;
+    this.Bounds = _.assign(Bounds, o.Bounds);
     this.GraphQLTypes = o.GraphQLTypes;
+    this.graphqlHTTP = o.graphqlHTTP;
     this.bypass = o.bypass||false;
     this.caching = o.caching||false;
     this.handlerOps = o.handlerOps||{};
@@ -118,7 +105,7 @@ export default class Authograph {
     }
   }
   applyPermissions(type, o,pSet = {}, bypass) {
-    let fieldCache, nulled;
+    let fieldCache;
     let _fields = o.fields;
     let filter = initFilter(o.name);
     o.fields = () => {
@@ -127,10 +114,10 @@ export default class Authograph {
       }
       if(_fields instanceof Function)
         _fields = _fields();
-      fieldCache = filter(_fields, pSet, bypass)
+      fieldCache = filter(_fields, pSet, bypass);
 
       if(!fieldCache || Object.keys(fieldCache).length === 0) {
-        fieldCache = type.Null._config.fields;
+        fieldCache = type.Null._typeConfig.fields;
       }
       return fieldCache;
     }
@@ -147,33 +134,33 @@ export default class Authograph {
     return typeContainer[def.name] = new typeContainer.GraphQLObjectType(def);
   }
   buildSchema(req) {
-    let roles,
-        pSet,
+    let pSet,
         cached,
         hash,
         bypass = false;
     return this.getBypass(req)
     .then((b) =>{
+      if(this.verbose)
+        console.log(`Bypassing Authorization: ${b}`)
       if(b)
         bypass = b;
       return this.getRoles(req);
     })
     .then((r) => {
+      req.Roles = r;
       if(this.caching) {
-        hash = this.hashRoles(r);
+        hash = this.hashRoles(req.Roles);
         if(this.schemaCache[hash])
           return cached = this.schemaCache[hash];
-        roles = r;
-        return this.buildPSet(roles);
+        return this.buildPSet(req.Roles);
       }
-      roles = r;
-      return this.buildPSet(roles);
+      return this.buildPSet(req.Roles);
     })
     .then((p) => {
       if(cached)
         return cached;
       pSet = p;
-      let typeContainer = genTypeContainer(this.GraphQLTypes);
+      let typeContainer = generateTypeContainer(this.GraphQLTypes);
       // Generate types
       this.types.forEach(t => this.genType(typeContainer, t, pSet, bypass));
       return typeContainer;
@@ -193,13 +180,13 @@ export default class Authograph {
   }
 
   agHTTP(req,res) {
-    this.buildSchema(req)
+    return this.buildSchema(req)
     .then((schema) => {
       return this.graphqlHTTP(() => {
         return {
           schema: schema,
           graphiql: true,
-          rootValue: {req: req},
+          rootValue: {req:req},
           formatError(err) {
             console.log(`Format validation error: ${err}`);
             return err;

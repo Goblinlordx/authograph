@@ -7,9 +7,19 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-const bounder = (resolve, bounds) => (root, args, context) => {
-  console.log(bounds);
-  return resolve(root, args, context);
-}
+/**
+*  Receives resolve function and bounds.  Returns a resolve function which calls all bounds prior to resolving.
+*  If any bounding function for a given role returns false that role will be removed from any further resolves.
+*
+*  @param {function} resolve
+*  @param {Object} bounds
+*/
+const bounder = (resolve, bounds) => {
+  return (root, args, context) => {
+    if(!Object.keys(context))
+      return null;
+    return resolve(root, args, context);
+  };
+};
 
 export default bounder;

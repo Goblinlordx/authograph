@@ -8,7 +8,7 @@
  */
 
  const NullType = (type) => {
-   var def = new type.GraphQLObjectType({
+   let def = new type.GraphQLObjectType({
      name: 'Null',
      description: "Null field type placeholder",
      fields: {
