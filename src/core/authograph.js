@@ -9,6 +9,8 @@
 import _ from 'lodash';
 import bounder from './bounder';
 
+const GraphQLTypes = ["Int","String","__Schema","__Type","__TypeKind","Boolean","__Field","__InputValue","__EnumValue","__Directive"];
+
 const initFilter = (type) => (fields, pSet, bypass) => {
   if(bypass)
     return fields;
@@ -32,6 +34,24 @@ const initFilter = (type) => (fields, pSet, bypass) => {
   },{});
   return bounded;
 }
+
+const remapType = (schemaTypeMap, typeMap, type, newTypeList) => {
+  if(type.ofType){
+    const recurse = remapType(schemaTypeMap, typeMap, type.ofType, newTypeList);
+    if(recurse) {
+      var container = Object.create(type);
+      container.ofType = recurse;
+      return container;
+    }
+    return;
+  }
+  var ftk = type.name;
+  if(newTypeList.indexOf(ftk) === -1)
+    return;
+  if(!typeMap[ftk])
+    return typeMap[ftk] = Object.create(schemaTypeMap[ftk]);
+  return typeMap[ftk];
+};
 
 const NullType = (type) => {
   var def = new type.GraphQLObjectType({
@@ -195,9 +215,70 @@ export default class Authograph {
   agHTTP(req,res) {
     this.buildSchema(req)
     .then((schema) => {
+      const removeGraphQLTypes = initDiff(GraphQLTypes)
+      var userTypes = removeGraphQLTypes(Object.keys(schema._typeMap));
+      var permitTypes = initInclude(["Query", "User", "Post"])(Object.keys(schema._typeMap));
+      var newTypeList = GraphQLTypes.concat(permitTypes);
+
+      var s2 = Object.create(schema);
+
+      s2._typeMap = permitTypes
+      .reduce((typeMap,typeKey) => {
+        var typeOverlay;
+        console.log('adding: ',typeKey)
+        if(typeMap[typeKey]) {
+          typeOverlay = typeMap[typeKey];
+        } else {
+          typeOverlay = Object.create(schema._typeMap[typeKey]);
+        }
+        typeOverlay._fields = Object.keys(typeOverlay._fields)
+        .reduce((fieldMap,fieldKey) => {
+          var fieldOverlay = Object.create(typeOverlay._fields[fieldKey]);
+          var ftk;
+          fieldOverlay.type = remapType(schema._typeMap, typeMap, fieldOverlay.type, newTypeList);
+          /*
+          if(typeOverlay._fields[fieldKey].type.ofType && newTypeList.indexOf(ftk = typeOverlay._fields[fieldKey].type.ofType.name) !== -1) {
+            fieldOverlay = Object.create(typeOverlay._fields[fieldKey]);
+            if(!typeMap[ftk])
+              typeMap[ftk] = Object.create(schema._typeMap[ftk]);
+            fieldOverlay.type = Object.create(typeOverlay._fields[fieldKey].type)
+            fieldOverlay.type.ofType = typeMap[ftk];
+          }
+          if(typeOverlay._fields[fieldKey].type.isTypeOf && newTypeList.indexOf(ftk = typeOverlay._fields[fieldKey].type.isTypeOf.name) !== -1) {
+            fieldOverlay = Object.create(typeOverlay._fields[fieldKey]);
+            if(!typeMap[ftk])
+              typeMap[ftk] = Object.create(schema._typeMap[ftk]);
+            fieldOverlay.type = typeMap[ftk];
+          }
+          // Base type
+          if(!typeOverlay._fields[fieldKey].type.isTypeOf && !typeOverlay._fields[fieldKey].type.ofType)
+            fieldOverlay = Object.create(typeOverlay._fields[fieldKey]);
+            */
+          if(fieldOverlay.type) {
+            fieldMap[fieldKey] = fieldOverlay;
+          } else {
+          }
+          if(fieldKey === "users"){
+            console.log("TEST")
+            console.log(fieldOverlay);
+          }
+          return fieldMap;
+        },{})
+        console.log(typeOverlay)
+        if(Object.keys(typeOverlay._fields).length > 0) {
+          typeMap[typeKey] = typeOverlay;
+        }
+        return typeMap;
+      },GraphQLTypes.reduce((r,k) => {
+        r[k] = schema._typeMap[k];
+        return r;
+      },{}));
+      s2._queryType = s2._typeMap.Query;
+      s2._mutationType = s2._typeMap.Mutation;
+
       return this.graphqlHTTP(() => {
         return {
-          schema: schema,
+          schema: s2,
           graphiql: true,
           rootValue: {req: req},
           formatError(err) {
@@ -210,3 +291,6 @@ export default class Authograph {
     .catch(this.httpErrorHandler(req,res));
   }
 }
+
+const initDiff = (filter) => (input) => input.filter(k => filter.indexOf(k) === -1)
+const initInclude = (filter) => (input) => input.filter(k => filter.indexOf(k) !== -1)
