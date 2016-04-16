@@ -21,7 +21,9 @@
     ]
   },
   "nyc": {
-    "include": ["src/**"]
+    "include": [
+      "src/**"
+    ]
   },
   "scripts": {
     "test": "npm run lint && npm run cover",
@@ -30,6 +32,7 @@
     "creport": "nyc --all --reporter=lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
     "lcov": "nyc report --reporter=text-lcov||true",
     "lint": "eslint src||true",
+    "watch": "gulp watch",
     "build": "babel src --ignore __tests__ --out-dir dist/",
     "prepub": "npm run build && cp README.md ./dist && cp package.json ./dist"
   },
@@ -64,6 +67,9 @@
     "coveralls": "^2.11.9",
     "eslint": "^2.8.0",
     "eslint-plugin-babel": "^3.2.0",
+    "graphql": "^0.5.0",
+    "gulp": "^3.9.1",
+    "gulp-shell": "^0.5.2",
     "mocha": "^2.4.5",
     "nyc": "^6.4.0"
   }

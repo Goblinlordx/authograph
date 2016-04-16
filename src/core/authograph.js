@@ -143,7 +143,7 @@ export default class Authograph {
     };
   }
 
-  filterSchema(schema, pSet) {
+  filterSchema(schema, pSet, permittedRoles = []) {
     const permitTypes = _.intersection(Object.keys(pSet),
                                      Object.keys(schema._typeMap));
     const newTypeList = GraphQLTypes.concat(permitTypes);
@@ -199,7 +199,8 @@ export default class Authograph {
       // Prevent property lookup of old mutation type
       filteredSchema._mutationType = undefined;
     }
-
+    filteredSchema._permittedRoles = permittedRoles
+                                     .slice(0,permittedRoles.length);
     return filteredSchema;
   }
   middleware(baseSchema) {
@@ -211,12 +212,11 @@ export default class Authograph {
         return this.buildPSet(roles);
       })
       .then(pSet => {
-        return this.filterSchema(baseSchema, pSet);
+        return this.filterSchema(baseSchema, pSet, roles);
       })
       .then(schema => {
         if (schema) {
           req.schema = Object.create(schema);
-          req.schema._permittedRoles = roles;
           req.schema._oob = [];
         } else {
           console.log('Insufficient permissions to use schema');
@@ -229,5 +229,4 @@ export default class Authograph {
       });
     };
   }
-
 }
