@@ -43,7 +43,124 @@ const remapFieldType = (schemaTypeMap, typeMap, type, newTypeList) => {
   return typeMap[ftk];
 };
 
-export default class Authograph {
+const bounder = (resolve, bounds) => {
+  return (root, args, context) => {
+    const permittedRoles = context.schema._permittedRoles || [];
+    const oob = context.schema._oob;
+
+    Object.keys(bounds)
+    .forEach(arg => {
+      return Object.keys(bounds[arg])
+      .forEach(role => {
+        if (permittedRoles.indexOf(role) === -1) {
+          return;
+        }
+        const pass = Object.keys(bounds[arg][role])
+        .every(bound => {
+          if (!this.Bounds[bound]) {
+            console.warn(new Error(`Invalid permission bounder ${bound}`));
+            return true;
+          }
+          return this.Bounds[bound](arg,
+            bounds[arg][role][bound], root, args, context);
+        });
+        if (!pass) {
+          console.log(context);
+          permittedRoles.splice(permittedRoles.indexOf(role),1);
+          oob.push([
+            context.parentType.name,
+            context.fieldName,
+            bounds,
+            args
+          ]);
+        }
+      });
+    });
+    if (permittedRoles.length === 0) {
+      throw new Error(`Parameters exceeded bounds: ${JSON.stringify(oob)}}`);
+    }
+    return resolve(root, args, context);
+  };
+};
+
+export const filterSchema = (schema, pSet, permittedRoles) => {
+  let deriveP;
+  let pRoles;
+  if (permittedRoles) {
+    pRoles = permittedRoles.slice(0, permittedRoles.length);
+  } else {
+    deriveP = true;
+    pRoles = [];
+  }
+  const permitTypes = _.intersection(Object.keys(pSet),
+                                   Object.keys(schema._typeMap));
+  const newTypeList = GraphQLTypes.concat(permitTypes);
+  const filteredSchema = Object.create(schema);
+
+  filteredSchema._typeMap = permitTypes
+  .reduce((typeMap, typeKey) => {
+    let typeOverlay;
+    if (typeMap[typeKey]) {
+      typeOverlay = typeMap[typeKey];
+    } else {
+      typeOverlay = Object.create(schema._typeMap[typeKey]);
+    }
+
+    typeOverlay._fields = _.intersection(Object.keys(pSet[typeKey]),
+                                         Object.keys(typeOverlay._fields))
+    .reduce((fieldMap,fieldKey) => {
+      const fieldOverlay = Object.create(typeOverlay._fields[fieldKey]);
+      fieldOverlay.type = remapFieldType(schema._typeMap, typeMap,
+                                         fieldOverlay.type, newTypeList);
+      if (fieldOverlay.type) {
+        fieldOverlay.args = fieldOverlay.args
+        .filter(arg => Object.keys(pSet[typeKey][fieldKey])
+                       .indexOf(arg.name) !== -1 || arg.name === '_');
+
+        fieldOverlay.resolve = bounder(fieldOverlay.resolve,
+                                            pSet[typeKey][fieldKey]);
+        if (deriveP) {
+          Object.keys(pSet[typeKey][fieldKey]).forEach(arg => {
+            Object.keys(pSet[typeKey][fieldKey][arg]).forEach(role => {
+              if (pRoles.indexOf(role) === -1) {
+                pRoles.push(role);
+              }
+            });
+          });
+        }
+        fieldMap[fieldKey] = fieldOverlay;
+      }
+      return fieldMap;
+    },{});
+    typeMap[typeKey] = typeOverlay;
+    return typeMap;
+  }, GraphQLTypes
+  .reduce((r,k) => {
+    r[k] = schema._typeMap[k];
+    return r;
+  },{}));
+
+  if (!filteredSchema._typeMap[filteredSchema._queryType.name]) {
+    return; // Invalid schema
+  }
+  filteredSchema._queryType = filteredSchema
+    ._typeMap[filteredSchema._queryType.name];
+
+  if (filteredSchema._mutationType &&
+      filteredSchema._typeMap[filteredSchema._mutationType.name]) {
+
+    filteredSchema._mutationType = filteredSchema
+      ._typeMap[filteredSchema._mutationType.name];
+
+  } else {
+    // Prevent property lookup of old mutation type
+    filteredSchema._mutationType = undefined;
+  }
+  filteredSchema._permittedRoles = pRoles;
+  return filteredSchema;
+};
+
+export class Authograph {
   constructor(o = {}) {
     if (o.getRoles instanceof Function) {
       this.getRoles = o.getRoles;
@@ -103,122 +220,6 @@ export default class Authograph {
     };
   }
 
-  bounder(resolve, bounds) {
-    return (root, args, context) => {
-      const permittedRoles = context.schema._permittedRoles || [];
-      const oob = context.schema._oob;
-
-      Object.keys(bounds)
-      .forEach(arg => {
-        return Object.keys(bounds[arg])
-        .forEach(role => {
-          if (permittedRoles.indexOf(role) === -1) {
-            return;
-          }
-          const pass = Object.keys(bounds[arg][role])
-          .every(bound => {
-            if (!this.Bounds[bound]) {
-              console.warn(new Error(`Invalid permission bounder ${bound}`));
-              return true;
-            }
-            return this.Bounds[bound](arg,
-              bounds[arg][role][bound], root, args, context);
-          });
-          if (!pass) {
-            console.log(context);
-            permittedRoles.splice(permittedRoles.indexOf(role),1);
-            oob.push([
-              context.parentType.name,
-              context.fieldName,
-              bounds,
-              args
-            ]);
-          }
-        });
-      });
-      if (permittedRoles.length === 0) {
-        throw new Error(`Parameters exceeded bounds: ${JSON.stringify(oob)}}`);
-      }
-      return resolve(root, args, context);
-    };
-  }
-
-  filterSchema(schema, pSet, permittedRoles) {
-    let deriveP;
-    let pRoles;
-    if (permittedRoles) {
-      pRoles = permittedRoles.slice(0, permittedRoles.length);
-    } else {
-      deriveP = true;
-      pRoles = [];
-    }
-    const permitTypes = _.intersection(Object.keys(pSet),
-                                     Object.keys(schema._typeMap));
-    const newTypeList = GraphQLTypes.concat(permitTypes);
-    const filteredSchema = Object.create(schema);
-
-    filteredSchema._typeMap = permitTypes
-    .reduce((typeMap, typeKey) => {
-      let typeOverlay;
-      if (typeMap[typeKey]) {
-        typeOverlay = typeMap[typeKey];
-      } else {
-        typeOverlay = Object.create(schema._typeMap[typeKey]);
-      }
-
-      typeOverlay._fields = _.intersection(Object.keys(pSet[typeKey]),
-                                           Object.keys(typeOverlay._fields))
-      .reduce((fieldMap,fieldKey) => {
-        const fieldOverlay = Object.create(typeOverlay._fields[fieldKey]);
-        fieldOverlay.type = remapFieldType(schema._typeMap, typeMap,
-                                           fieldOverlay.type, newTypeList);
-        if (fieldOverlay.type) {
-          fieldOverlay.args = fieldOverlay.args
-          .filter(arg => Object.keys(pSet[typeKey][fieldKey])
-                         .indexOf(arg.name) !== -1 || arg.name === '_');
-
-          fieldOverlay.resolve = this.bounder(fieldOverlay.resolve,
-                                              pSet[typeKey][fieldKey]);
-          if (deriveP) {
-            Object.keys(pSet[typeKey][fieldKey]).forEach(arg => {
-              Object.keys(pSet[typeKey][fieldKey][arg]).forEach(role => {
-                if (pRoles.indexOf(role) === -1) {
-                  pRoles.push(role);
-                }
-              });
-            });
-          }
-          fieldMap[fieldKey] = fieldOverlay;
-        }
-        return fieldMap;
-      },{});
-      typeMap[typeKey] = typeOverlay;
-      return typeMap;
-    }, GraphQLTypes
-    .reduce((r,k) => {
-      r[k] = schema._typeMap[k];
-      return r;
-    },{}));
-
-    if (!filteredSchema._typeMap[filteredSchema._queryType.name]) {
-      return; // Invalid schema
-    }
-    filteredSchema._queryType = filteredSchema
-      ._typeMap[filteredSchema._queryType.name];
-
-    if (filteredSchema._mutationType &&
-        filteredSchema._typeMap[filteredSchema._mutationType.name]) {
-
-      filteredSchema._mutationType = filteredSchema
-        ._typeMap[filteredSchema._mutationType.name];
-
-    } else {
-      // Prevent property lookup of old mutation type
-      filteredSchema._mutationType = undefined;
-    }
-    filteredSchema._permittedRoles = pRoles;
-    return filteredSchema;
-  }
   middleware(baseSchema) {
     return (req, res, next) => {
       let roles;
@@ -228,7 +229,7 @@ export default class Authograph {
         return this.buildPSet(roles);
       })
       .then(pSet => {
-        return this.filterSchema(baseSchema, pSet, roles);
+        return filterSchema(baseSchema, pSet, roles);
       })
       .then(schema => {
         if (schema) {

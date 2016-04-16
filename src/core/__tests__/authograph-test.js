@@ -7,7 +7,11 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-import Authograph from '../authograph';
+import {
+  filterSchema,
+  Authograph
+} from '../authograph';
+
 import {
   testSchema,
   testPermissions
@@ -24,19 +28,20 @@ describe('Authograph', () => {
   it('exports Authograph', () => {
     expect(Authograph).to.not.equal(undefined);
   });
+  it('exports filterSchema()', () => {
+    expect(filterSchema).to.not.equal(undefined);
+  });
   it('is extendable', () => {
     const authObj = new Authograph();
     expect(authObj).to.be.instanceof(Authograph);
   });
-  describe('.filterSchema()', () => {
+  describe('filterSchema()', () => {
     it('when passed empty permissions will return undefined', () => {
-      const authObj = new Authograph();
-      const result = authObj.filterSchema(testSchema, {});
+      const result = filterSchema(testSchema, {});
       expect(result).to.equal(undefined);
     });
     it('when passed permissions will return schema', () => {
-      const authObj = new Authograph();
-      const result = authObj.filterSchema(testSchema, testPermissions);
+      const result = filterSchema(testSchema, testPermissions);
       expect(result).to.be.instanceof(GraphQLSchema);
     });
   });
