@@ -43,7 +43,7 @@ const instance = new Authograph({
     var user = req.user||{};
     if(!(user.Roles instanceof Array))
       return Promise.resolve([]);
-    return Promise.resolve(user.Roles.map(o => o.id));
+    return Promise.resolve(user.Roles.map(o => o.type));
   },
   buildPSet(roleIds) {
     Promise.resolve({
