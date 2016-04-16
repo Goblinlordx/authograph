@@ -7,5 +7,5 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-import Authograph from "./core/authograph";
+import Authograph from './core/authograph';
 export default Authograph;
