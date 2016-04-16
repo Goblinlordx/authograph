@@ -17,7 +17,9 @@ import {
 export const testPermissions = {
   Query: {
     id: {
-      admin: {}
+      _: {
+        admin: {}
+      }
     }
   }
 };

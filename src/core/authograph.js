@@ -143,7 +143,15 @@ export default class Authograph {
     };
   }
 
-  filterSchema(schema, pSet, permittedRoles = []) {
+  filterSchema(schema, pSet, permittedRoles) {
+    let deriveP;
+    let pRoles;
+    if (permittedRoles) {
+      pRoles = permittedRoles.slice(0, permittedRoles.length);
+    } else {
+      deriveP = true;
+      pRoles = [];
+    }
     const permitTypes = _.intersection(Object.keys(pSet),
                                      Object.keys(schema._typeMap));
     const newTypeList = GraphQLTypes.concat(permitTypes);
@@ -171,6 +179,15 @@ export default class Authograph {
 
           fieldOverlay.resolve = this.bounder(fieldOverlay.resolve,
                                               pSet[typeKey][fieldKey]);
+          if (deriveP) {
+            Object.keys(pSet[typeKey][fieldKey]).forEach(arg => {
+              Object.keys(pSet[typeKey][fieldKey][arg]).forEach(role => {
+                if (pRoles.indexOf(role) === -1) {
+                  pRoles.push(role);
+                }
+              });
+            });
+          }
           fieldMap[fieldKey] = fieldOverlay;
         }
         return fieldMap;
@@ -199,8 +216,7 @@ export default class Authograph {
       // Prevent property lookup of old mutation type
       filteredSchema._mutationType = undefined;
     }
-    filteredSchema._permittedRoles = permittedRoles
-                                     .slice(0,permittedRoles.length);
+    filteredSchema._permittedRoles = pRoles;
     return filteredSchema;
   }
   middleware(baseSchema) {
