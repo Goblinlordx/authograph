@@ -1,8 +1,19 @@
 Authograph
 ==========
+##### Authorization solution for use with GraphQL.
 [![npm version](https://badge.fury.io/js/authograph.svg)](https://badge.fury.io/js/authograph) [![Build Status](https://travis-ci.org/Goblinlordx/authograph.svg?branch=master)](https://travis-ci.org/Goblinlordx/authograph) [![Coverage Status](https://coveralls.io/repos/github/Goblinlordx/authograph/badge.svg?branch=master)](https://coveralls.io/github/Goblinlordx/authograph?branch=master)
 
-Authorization solution for use with GraphQL.
+Authograph is intended to be a solution specifically for handling Authorization.  On any given server Access Control can broken down into 2 phases prior passing an event to some handler function.
+
+![alt text](https://github.com/Goblinlordx/authograph/raw/master/resources/a-a-h.png "Authentication -> Authorization -> Request Handler (REST, GraphQL, etc.)")
+
+
+
+Authentication should occur first.  This is the act of identifying a specific user.  This can be done in many ways.  You might use Passport.js middleware to accomplish this task.  You could also use the phase of the moon if you really wanted as Authograph has no requirement as far as how you accomplish this.
+
+Authorization is done via Authograph and is Authographs core functionality.  Currently, Authograph is being developed for use specifically with GraphQL schemas.  Authograph will whitelist a schema based on a permission set as well as wrap resolving functions with bounding functions to bound client sent arguments based on role.
+
+Lastly, after Authograph has processed the base schema the resultant schema can then be used by a GraphQL handler (graphql, express-graphql, etc).
 
 
 ## Getting Started
@@ -14,90 +25,19 @@ npm i -S authograph
 ```
 
 #### Usage
-An instance of Authograph has a method ```.agHTTP``` can be used as a HANDLE function (```function(req,res)```).  This can be used with express in the following way:
-```js
-import authograph from './graphql/authograph';
+There are 2 main ways to use this package.  You can either use a configured instance as middleware or you can use the standalone filterSchema function.
 
-.
-.
-.
-
-
-app.use('/graphql', authograph.agHTTP.bind(authograph));
+##### Using as middleware
+The ```.middleware(schema)``` method on a configured instance as middleware.  This will attach a ```.schema``` property to the ```req``` object.
 ```
-
-
-###### Type definitions
-Type definitions must be refactored slightly to work with this package.  Type definitions are injected at execution time to provide restricted types based on a permission set.  Below is a standard GraphQL object type definition (partially taken from [SWAPI implentation](https://github.com/graphql/swapi-graphql/blob/master/src/schema/types/species.js)):
-```js
-import {
-  GraphQLObjectType,
-  GraphQLString
-} from 'graphql';
-
-var SpeciesType = new GraphQLObjectType({
-  name: 'Species',
-  description: `A type of person or character within the Star Wars Universe.`,
-  fields: () => ({
-    name: {
-      type: GraphQLString,
-      description: `The name of this species.`
-    }
-});
-
-export default SpeciesType;
-```
-
-To refactor this to be compatible first remove the GraphQLObjectType instantiation and instead define a function taking the single parameter ```type```.
-
-```js
-var SpeciesType = (type) => {
-}
-```
-Next in the each field's ```type``` field should be set to ```type.<typename>```
-
-```js
-type: type.GraphQLString,
-```
-
-The result of this refactoring should look like this:
-```js
-var SpeciesType = (type) => {
-  name: 'Species',
-  description: `A type of person or character within the Star Wars Universe.`,
-  fields: () => ({
-    name: {
-      type: type.GraphQLString,
-      description: `The name of this species.`
-    }
-};
-
-export default SpeciesType;
-```
-
-##### Creating a usable instance
-Inside your project first configure an instance for your server to use.  This requires a few things to be injected into the configuration.
-```
-Query: <Root Query GraphQL Object Type>
-Mutation: <Root Mutation GraphQL Object Type>
-GraphQLTypes: <GraphQL Object Types>
-graphqlHTTP: <graphQLHTTP implementation from graphql-express>
-types: <Your custom GraphQL Type definitions>
 getRoles: <Function returning a promise of roles>
 builtPSet: <Function which takes a set of roles resolved from getRoles and returns a promise which resolves to a structure containing permissions>
 ```
 
 ```js
-import MyRootQuery from './Query';
-import MyRootMutation from './Mutation';
-import * as GraphQLTypes from 'graphql/types';
+import Authograph from 'authograph';
 
 const instance = new Authograph({
-  Query: MyRootQuery,
-  Mutation: MyRootMutation,
-  GraphQLTypes: GraphQLTypes,
-  graphqlHTTP: graphqlHTTP,
-  types: Types,
   getRoles(req) {
     console.log("getRoles called");
     var user = req.user||{};
@@ -138,3 +78,6 @@ export default instance;
   }
 }
 ```
+
+##### Using filterSchema
+TODO
