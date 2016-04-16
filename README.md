@@ -47,8 +47,14 @@ const instance = new Authograph({
   },
   buildPSet(roleIds) {
     Promise.resolve({
-      admin: {
+      Query: {
         users: {
+          id: {
+            admin:{
+              min: 1,
+              max: 6
+            }
+          },
           name: {
             admin:{}
           },
@@ -69,11 +75,12 @@ export default instance;
 ##### buildPSet()
 ```buildPSet``` must return a promise.  The promise should resolve to a Object with the following format.
 ```js
-<Role identifier>: {
-  <GraphQL Object Type name>: {
-    <field name>: {
-      <role>: {}, // Used if are no bounds are used applied to input args for a role type
-      <field arg>: {<bounds>}
+<GraphQL Object Type name>: {
+  <field name>: {
+    <field arg>: {
+      <role identifier>: {
+        <bounds>: <bounds parameter>  // Optional
+      }
     }
   }
 }
