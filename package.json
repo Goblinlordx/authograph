@@ -27,7 +27,7 @@
     "test": "npm run lint && npm run cover",
     "testonly": "mocha --compilers js:babel-core/register --check-leaks --full-trace src/**/__tests__/**/*-test.js",
     "cover": "nyc --all --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
-    "creport": "nyc --reporter=lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
+    "creport": "nyc --all --reporter=lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
     "lcov": "nyc report --reporter=text-lcov||true",
     "lint": "eslint src||true",
     "build": "babel src --ignore __tests__ --out-dir dist/",
