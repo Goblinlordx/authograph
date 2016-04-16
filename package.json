@@ -20,12 +20,15 @@
       "transform-runtime"
     ]
   },
+  "nyc": {
+    "include": ["src/**"]
+  },
   "scripts": {
     "test": "npm run lint && npm run cover",
     "testonly": "mocha --compilers js:babel-core/register --check-leaks --full-trace src/**/__tests__/**/*-test.js",
-    "cover": "nyc --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
+    "cover": "nyc --all --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
     "creport": "nyc --reporter=lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
-    "lcov": "nyc report --reporter=text-lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js||true",
+    "lcov": "nyc report --reporter=text-lcov||true",
     "lint": "eslint src||true",
     "build": "babel src --ignore __tests__ --out-dir dist/",
     "prepub": "npm run build && cp README.md ./dist && cp package.json ./dist"
