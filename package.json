@@ -1,6 +1,6 @@
 {
   "name": "authograph",
-  "version": "0.0.1k",
+  "version": "0.0.1m",
   "description": "Authorization solution for use with GraphQL",
   "contributors": [
     "Benjamin Baldivia <goblinlordx@gmail.com>"
@@ -26,7 +26,8 @@
     "cover": "nyc --require babel-core/register mocha src/**/__tests__/**/*-test.js",
     "lcov": "nyc report --reporter=text-lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js",
     "lint": "eslint src||true",
-    "build": "babel src --ignore __tests__ --out-dir dist/"
+    "build": "babel src --ignore __tests__ --out-dir dist/",
+    "prepub": "npm run build && cp README.md ./dist && cp package.json ./dist"
   },
   "repository": {
     "type": "git",

@@ -1,5 +1,6 @@
 Authograph
 ==========
+[![npm version](https://badge.fury.io/js/authograph.svg)](https://badge.fury.io/js/authograph) [![Build Status](https://travis-ci.org/Goblinlordx/authograph.svg?branch=master)](https://travis-ci.org/Goblinlordx/authograph) [![Coverage Status](https://coveralls.io/repos/github/Goblinlordx/authograph/badge.svg?branch=master)](https://coveralls.io/github/Goblinlordx/authograph?branch=master)
 
 Authorization solution for use with GraphQL.
 
