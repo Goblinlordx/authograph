@@ -3,7 +3,7 @@ Authograph
 ##### Authorization solution for use with GraphQL.
 [![npm version](https://badge.fury.io/js/authograph.svg)](https://badge.fury.io/js/authograph) [![Build Status](https://travis-ci.org/Goblinlordx/authograph.svg?branch=master)](https://travis-ci.org/Goblinlordx/authograph) [![Coverage Status](https://coveralls.io/repos/github/Goblinlordx/authograph/badge.svg?branch=master)](https://coveralls.io/github/Goblinlordx/authograph?branch=master)
 
-Authograph is intended to be a solution specifically for handling Authorization.  On any given server Access Control can broken down into 2 phases prior passing an event to some handler function.
+Authograph is intended to be a solution specifically for handling Authorization.  Authograph is an implementation of [Role Based Access Control](https://en.wikipedia.org/wiki/Role-based_access_control).  On any given server Access Control can broken down into 2 phases prior passing an event to some handler function.
 
 ![alt text](https://raw.githubusercontent.com/Goblinlordx/authograph/master/resources/a_a_h.png "Authentication -> Authorization -> Request Handler (REST, GraphQL, etc.)")
 
