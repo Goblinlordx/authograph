@@ -25,6 +25,7 @@
     "testonly": "mocha --compilers js:babel-core/register --check-leaks --full-trace src/**/__tests__/**/*-test.js",
     "cover": "nyc --require babel-core/register mocha src/**/__tests__/**/*-test.js",
     "creport": "nyc --reporter=text --reporter=lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js",
+    "coveralls": "nyc report --reporter=text-lcov --require babel-core/register mocha src/**/__tests__/**/*-test.js|coveralls",
     "lint": "eslint src||true",
     "build": "babel src --ignore __tests__ --out-dir dist/"
   },
