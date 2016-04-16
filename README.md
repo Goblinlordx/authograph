@@ -5,7 +5,7 @@ Authograph
 
 Authograph is intended to be a solution specifically for handling Authorization.  On any given server Access Control can broken down into 2 phases prior passing an event to some handler function.
 
-![alt text](https://github.com/Goblinlordx/authograph/raw/master/resources/a-a-h.png "Authentication -> Authorization -> Request Handler (REST, GraphQL, etc.)")
+![alt text](https://raw.githubusercontent.com/Goblinlordx/authograph/master/resources/a_a_h.png "Authentication -> Authorization -> Request Handler (REST, GraphQL, etc.)")
 
 
 
