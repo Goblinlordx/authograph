@@ -17,7 +17,7 @@ import {describe, it} from 'mocha';
 import {expect} from 'chai';
 
 
-describe('Bound function tests:', () => {
+describe('Bounding function tests:', () => {
   describe('min',() => {
     it('passes when argument is not received', () => {
       expect(min('testArg', 2, null, {})).to.equal(true);

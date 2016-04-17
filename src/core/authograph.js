@@ -22,6 +22,18 @@ const GraphQLTypes = [
   '__Directive'
 ];
 
+
+/**
+*  remapFieldType recurses through wrapped object types to find the base
+*  Object Type.  If the type is not in a whitelist of types (newTypeList),
+*  The Type is returned undefined.  If it is in the whitelist a new type
+*  which has the prototype of the old type is returned.
+*  @param {Object} schemaTypeMap - schema._typeMap from a base GraphQL schema
+*  @param {Object} typeMap - the typeMap which will be used in new schema
+*  @param {Object} type - Type which is being checked
+*  @param {Array} newTypeList - List of Type.name which are whitelisted in
+*                               new schema
+*/
 const remapFieldType = (schemaTypeMap, typeMap, type, newTypeList) => {
   if (type.ofType) {
     const recurse = remapFieldType(schemaTypeMap,
@@ -43,6 +55,13 @@ const remapFieldType = (schemaTypeMap, typeMap, type, newTypeList) => {
   return typeMap[ftk];
 };
 
+/**
+*  bounder function wraps a resolver with a function which validates bounding
+*  functions.
+*  @param {Function} resolve - GraphQL field resolve function
+*  @param {Object} bounds - Object containing bounds
+*  @return {Function} resolver - Returns a GraphQL field resolve function
+*/
 const bounder = (resolve, bounds) => {
   return (root, args, context) => {
     const permittedRoles = context.schema._permittedRoles || [];
@@ -83,6 +102,17 @@ const bounder = (resolve, bounds) => {
   };
 };
 
+/**
+*  filterSchema takes as parameters a base GraphQL schema, permissions object,
+*  and a list of permitted roles that can use the resultant schema.  The return
+*  is the resultant schema which has been sanitized and has bounding functions
+*  injected into the field resolver functions.
+*  @param {GraphQLSchema} schema - Base GraphQL schema
+*  @param {PSet} pSet - Permissions set object
+*  @param {Array} permittedRoles - Roles which are permitted to use resultant
+*                                  schema.
+*  @return {GraphQLSchema} - Sanitized resultant schema
+*/
 export const filterSchema = (schema, pSet, permittedRoles) => {
   let deriveP;
   let pRoles;
@@ -181,13 +211,16 @@ export class Authograph {
     this.caching = o.caching || false;
     this.schemaCache = {};
   }
+
   cacheVersion() {
     return Promise.resolve(this._currentCacheVersion);
   }
+
   setCacheVersion(v) {
     this._currentCacheVersion = v;
     return Promise.resolve(v);
   }
+
   validateCache() {
     this.cacheVersion()
     .then(v => {
@@ -197,53 +230,57 @@ export class Authograph {
       return true;
     });
   }
+
   flushCache() {
     this.schemaCache = {};
     return Promise.resolve(true);
   }
-  getBypass() {
-    return Promise.resolve(this.bypass);
-  }
+
   getRoles() {
     return Promise.resolve([]);
   }
+
   buildPSet() {
     return Promise.resolve({});
   }
+
   hashRoles(roles) {
     return roles.sort().join();
   }
-  httpErrorHandler(req,res) {
-    return err => {
-      res.status(500).send('Internal Server Error');
-      throw err;
-    };
+
+  httpErrorHandler(req, res, err) {
+    res.status(500).send('Internal Server Error');
+    throw err;
   }
 
   middleware(baseSchema) {
     return (req, res, next) => {
-      let roles;
-      return this.getRoles(req)
-      .then(r => {
-        roles = r;
-        return this.buildPSet(roles);
-      })
-      .then(pSet => {
-        return filterSchema(baseSchema, pSet, roles);
-      })
-      .then(schema => {
-        if (schema) {
-          req.schema = Object.create(schema);
-          req.schema._oob = [];
-        } else {
-          console.log('Insufficient permissions to use schema');
-          if (this.emptySchemaHandler) {
-            return this.emptySchemaHandler(req,res);
+      try {
+        let roles;
+        return this.getRoles(req)
+        .then(r => {
+          roles = r;
+          return this.buildPSet(roles);
+        })
+        .then(pSet => {
+          return filterSchema(baseSchema, pSet, roles);
+        })
+        .then(schema => {
+          if (schema) {
+            req.schema = Object.create(schema);
+            req.schema._oob = [];
+          } else {
+            console.log('Insufficient permissions to use schema');
+            if (this.emptySchemaHandler) {
+              return this.emptySchemaHandler(req,res);
+            }
+            return res.status(404).send('Not found');
           }
-          return res.status(404).send('Not found');
-        }
-        next();
-      });
+          next();
+        });
+      } catch (err) {
+        return this.httpErrorHandler(req, res, err);
+      }
     };
   }
 }

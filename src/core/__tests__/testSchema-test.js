@@ -10,6 +10,7 @@
 import {
   GraphQLSchema,
   GraphQLObjectType,
+  GraphQLList,
   GraphQLString,
   GraphQLInt
 } from 'graphql';
@@ -17,6 +18,11 @@ import {
 export const testPermissions = {
   Query: {
     id: {
+      _: {
+        admin: {}
+      }
+    },
+    list: {
       _: {
         admin: {}
       }
@@ -39,6 +45,12 @@ export const Query = new GraphQLObjectType({
         type: GraphQLString,
         resolve() {
           return 'Test Usera Name';
+        }
+      },
+      list: {
+        type: new GraphQLList(GraphQLString),
+        resolve() {
+          return [ 'List item 1', 'List item 2' ];
         }
       }
     };
