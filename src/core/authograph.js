@@ -60,9 +60,11 @@ const remapFieldType = (schemaTypeMap, typeMap, type, newTypeList) => {
 *  functions.
 *  @param {Function} resolve - GraphQL field resolve function
 *  @param {Object} bounds - Object containing bounds
+*  @param {Object} BoundingDefs - Object containing bounding
+*                                 function definitions
 *  @return {Function} resolver - Returns a GraphQL field resolve function
 */
-const bounder = (resolve, bounds) => {
+const bounder = (resolve, bounds, BoundingDefs) => {
   return (root, args, context) => {
     const permittedRoles = context.schema._permittedRoles || [];
     const oob = context.schema._oob;
@@ -76,11 +78,11 @@ const bounder = (resolve, bounds) => {
         }
         const pass = Object.keys(bounds[arg][role])
         .every(bound => {
-          if (!this.Bounds[bound]) {
+          if (!BoundingDefs[bound]) {
             console.warn(new Error(`Invalid permission bounder ${bound}`));
             return true;
           }
-          return this.Bounds[bound](arg,
+          return BoundingDefs[bound](arg,
             bounds[arg][role][bound], root, args, context);
         });
         if (!pass) {
@@ -109,11 +111,13 @@ const bounder = (resolve, bounds) => {
 *  injected into the field resolver functions.
 *  @param {GraphQLSchema} schema - Base GraphQL schema
 *  @param {PSet} pSet - Permissions set object
+*  @param {Object} BoundingDefs - Object containing bounding
+*                                 function definitions
 *  @param {Array} permittedRoles - Roles which are permitted to use resultant
-*                                  schema.
+*                                  schema. (Optional)
 *  @return {GraphQLSchema} - Sanitized resultant schema
 */
-export const filterSchema = (schema, pSet, permittedRoles) => {
+export const filterSchema = (schema, pSet, BoundingDefs, permittedRoles) => {
   let deriveP;
   let pRoles;
   if (permittedRoles) {
@@ -148,7 +152,8 @@ export const filterSchema = (schema, pSet, permittedRoles) => {
                        .indexOf(arg.name) !== -1 || arg.name === '_');
 
         fieldOverlay.resolve = bounder(fieldOverlay.resolve,
-                                            pSet[typeKey][fieldKey]);
+                                            pSet[typeKey][fieldKey],
+                                            BoundingDefs);
         if (deriveP) {
           Object.keys(pSet[typeKey][fieldKey]).forEach(arg => {
             Object.keys(pSet[typeKey][fieldKey][arg]).forEach(role => {
@@ -263,7 +268,7 @@ export class Authograph {
           return this.buildPSet(roles);
         })
         .then(pSet => {
-          return filterSchema(baseSchema, pSet, roles);
+          return filterSchema(baseSchema, pSet, this.Bounds, roles);
         })
         .then(schema => {
           if (schema) {

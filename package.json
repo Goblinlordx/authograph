@@ -1,6 +1,6 @@
 {
   "name": "authograph",
-  "version": "0.0.1m",
+  "version": "0.0.1n",
   "description": "Authorization solution for use with GraphQL",
   "contributors": [
     "Benjamin Baldivia <goblinlordx@gmail.com>"

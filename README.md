@@ -87,4 +87,20 @@ export default instance;
 ```
 
 ##### Using filterSchema
-TODO
+The ```filterSchema``` function is provided if you would like to manage the request to permissions mapping.  This function can be used to simply take a base schema, a permissions object, and a bounding function definition object. ```filterSchema``` will output a sanitized schema which can then be used by GraphQL.
+
+```js
+import {filterSchema} from 'authograph';
+import {graphql} from 'graphql';
+import mySchema from './mySchema';
+import myBounds from './myBounds';
+
+.
+.
+.
+
+const processQuery = async (query, permissionsObj) => {
+  const restrictedSchema = filterSchema(mySchema, permissionsObj, myBounds);
+  return await graphql(restrictedSchema, query);
+};
+```
